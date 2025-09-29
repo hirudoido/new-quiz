@@ -230,6 +230,11 @@
                 margin: 0;
                 padding:0.25;
             }
+            .start-btn1,.start-btn2 {
+                padding: 0.5rem 1.5rem;
+                font-size: 1.1rem;
+                margin: 0.5rem 0.5rem;
+            }
         }
         
         @media (max-width: 380px) {
@@ -276,12 +281,11 @@
                 <p>• 早く正解するほど高得点が獲得できます</p>
                 <p>• 間違えると得点がマイナスになります</p>
                 <p>• 全問題終了後に結果が表示されます</p>
-                <p>• クイックスタートは7問で終わります</p>
+                <p>• クイックスタートは5問で終わります</p>
                 <p>• フォーマルスタートは用意したすべて問題に全て答えてもらいます</p>
-                <p>• プロトタイプだからもしかしたらコッソリアップデートするかも</p>
             </div>
-            <button class="start-btn1" onclick="startQuiz(1)">🚌 クイックスタート</button>
-            <button class="start-btn2" onclick="startQuiz(2)">🚌 フォーマルスタート</button>
+            <button class="start-btn1" onclick="startQuiz(1)">クイックスタート</button>
+            <button class="start-btn2" onclick="startQuiz(2)">フォーマルスタート</button>
         </div>
         
         <!-- クイズ画面 -->
@@ -319,9 +323,21 @@
     </div>
 
     <script>
-        //1
+        //432
         // クイズデータ（画像URLを実際のURLに置き換えてください）
-        //const quizData = 
+   /*   const quizData =           [    {
+                "image": "bass/01.jpg",
+                "question": "これはどの会社のバス？",
+                "choices": ["小田急バス", "京王電鉄バス"],
+                "correct": 0
+            },
+            {
+                "image": "bass/02.jpg",
+                "question": "都営バスは何年から始まった？",
+               "choices": ["1963年", "1924年"],
+                "correct": 1
+            }];*/
+
         fetch('./data.json')
           .then(res => res.json())
           .then(data => {
@@ -340,12 +356,13 @@
         let currentChoiceOrder = [];
         
         // 配列をシャッフルする関数
-        function shuffleArray(array) {
+        function shuffleArray(array,a) {
             const shuffled = [...array];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
+
             return shuffled;
         }
         
@@ -355,10 +372,15 @@
             currentQuestion = 0;
             score = 0;
             answers = [];
-            
+            console.log(a);
             // 問題をシャッフル
-            shuffledQuizData = shuffleArray(quizData);
-            
+            if(a==1){
+                //上位5問をランダムに抽出
+                shuffledQuizData = shuffleArray(quizData).slice(0, 5);
+            } else { 
+                shuffledQuizData = shuffleArray(quizData);
+            }
+            console.log(shuffledQuizData);
             showQuestion();
         }
         
@@ -381,13 +403,21 @@
             document.getElementById('questionDisplay').style.display = 'block';
             document.getElementById('choiceSection').style.display = 'none';
             document.getElementById('result').style.display = 'none';
-            
+            if (currentQuestion + 1 < shuffledQuizData.length) {
+                preloadImage(shuffledQuizData[currentQuestion + 1].image);
+            }
+
             // 2.5秒後に選択肢を表示
             setTimeout(() => {
                 showChoices();
             }, 2500);
         }
-        
+
+        function preloadImage(url) {
+        const img = new Image();
+        img.src = url;
+        }
+
         function showChoices() {
             const question = shuffledQuizData[currentQuestion];
             
@@ -483,8 +513,24 @@
             
             const accuracy = Math.round((correctCount / shuffledQuizData.length) * 100);
             resultText += `\n正解率: ${accuracy}%`;
-            
-            let grade = 'もう一度チャレンジして最高記録を目指そう';
+            console.log(accuracy, score, shuffledQuizData.length);
+            if (accuracy === 100 && score >= shuffledQuizData.length * 145) {
+                grade = 'え？運ゲーおめでとうございます‼';
+            } else if (accuracy >= 100 && score >= shuffledQuizData.length * 90) {
+                grade = '全問正解おめでとうございます‼もっと高いスコアを目指そう‼';
+            } else if (accuracy >= 70 && score >= shuffledQuizData.length * 75) {
+                grade = ' 素晴らしい！高得点を目指そう！ ';
+            } else if (accuracy >= 60 && score >= shuffledQuizData.length * 50) {            
+                grade = ' よく頑張りました！ もっと高いスコアを目指そう！ ';
+            } else if ( score == shuffledQuizData.length * 0) {
+                grade = 'よう０点取れましたね！';
+            } else if (accuracy >= 10 && score <= shuffledQuizData.length * -50) {
+                grade = ' マイナスに行っちゃった ';
+            } else if (accuracy == 0 && score <= shuffledQuizData.length * -145) {
+                grade = ' よくぞここまでマイナスに...逆にすごい ';
+            } else {
+                grade = ' 残念！次は頑張りましょう！ ';
+            }
             
             document.getElementById('resultDetails').innerHTML = `
                 <div style="white-space: pre-line; margin: 1rem 0;">${resultText}</div>
@@ -496,13 +542,13 @@
             document.getElementById('resultScreen').classList.remove('active');
             document.getElementById('startScreen').classList.add('active');
         }
-        (".hoge").addEventListener("touchstart", function(event) {
-            if (event.touches.length > 1) {
-                event.preventDefault();
-            }
-        }, {passive: false});
+        // スクロール無効化
+(".hoge").addEventListener("touchstart", function(event) {
+    if (event.touches.length > 1) {
+        event.preventDefault();
+    }
+}, {passive: false});
 
     </script>
 </body>
 </html>
-
